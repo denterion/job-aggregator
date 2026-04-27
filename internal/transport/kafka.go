@@ -4,19 +4,21 @@ import (
 	"context"
 	"encoding/json"
 	"job-aggregator/internal/models"
+
 	"github.com/segmentio/kafka-go"
 )
 
-func SendVacancy(v models.Vacancy) error{
+func SendVacancy(v models.Vacancy) error {
 
 	writer := &kafka.Writer{
-		Addr: kafka.TCP("localhost:9092"),
-		Topic: "jobs_raw",
-		Balancer: &kafka.LeastBytes{},
+		Addr:                   kafka.TCP("localhost:9092"),
+		Topic:                  "jobs_raw",
+		Balancer:               &kafka.LeastBytes{},
+		AllowAutoTopicCreation: true,
 	}
 
 	payload, err := json.Marshal(v)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
