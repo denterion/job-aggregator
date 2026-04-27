@@ -1,0 +1,43 @@
+package scraper
+
+import (
+	"fmt"
+	"job-aggregator/internal/models"
+	"time"
+
+	"github.com/gocolly/colly/v2"
+)
+
+type HabrScrapper struct {
+	Collector *colly.Collector
+}
+
+func NewHabrScraper() *HabrScrapper {
+	return &HabrScrapper{
+		Collector: colly.NewCollector(
+			colly.AllowedDomains("career.habr.com"),
+		),
+	}
+}
+
+func (s *HabrScrapper) Parse(query string) ([]models.Vacancy, error) {
+	var vacancies []models.Vacancy
+
+	s.Collector.OnHTML(".vacancy-card", func(e *colly.HTMLElement) {
+		v := models.Vacancy{
+			ID:        e.Attr("id"),
+			Title:     e.ChildText(".vacancy-card__title"),
+			Company:   e.ChildText(".vacancy-card__company-title"),
+			Location:  e.ChildText(".vacancy-card__meta"),
+			URL:       "https://career.habr.com" + e.ChildAttr(".vacancy-card__title-link", "href"),
+			Source:    "Habr",
+			CreatedAt: time.Now(),
+		}
+		vacancies = append(vacancies, v)
+	})
+
+	searchURL := fmt.Sprintf("https://career.habr.com/vacancies?q=%s&type=all", query)
+	err := s.Collector.Visit(searchURL)
+
+	return vacancies, err
+}
