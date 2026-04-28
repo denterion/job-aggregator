@@ -31,3 +31,13 @@ func SendVacancy(v models.Vacancy) error {
 	writer.Close()
 	return err
 }
+
+func GetReader() *kafka.Reader {
+	return kafka.NewReader(kafka.ReaderConfig{
+		Brokers:  []string{"localhost:9092"},
+		Topic:    "jobs_raw",
+		GroupID:  "processor-group",
+		MinBytes: 10e3,
+		MaxBytes: 10e6,
+	})
+}
