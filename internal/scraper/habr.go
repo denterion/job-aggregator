@@ -34,6 +34,15 @@ func (s *HabrScrapper) Parse(query string) ([]models.Vacancy, error) {
 			CreatedAt: time.Now(),
 		}
 		vacancies = append(vacancies, v)
+
+		if v.Title == "" || v.URL == "https://career.habr.com" {
+			fmt.Println("Скрапер нашел пустую карточку, проверь селекторы!")
+			return
+		}
+
+		fmt.Printf("Нашел: %s [%s]\n", v.Title, v.Company) // Увидишь это в консоли скрапера
+		vacancies = append(vacancies, v)
+
 	})
 
 	searchURL := fmt.Sprintf("https://career.habr.com/vacancies?q=%s&type=all", query)

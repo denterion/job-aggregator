@@ -11,7 +11,7 @@ import (
 func SendVacancy(v models.Vacancy) error {
 
 	writer := &kafka.Writer{
-		Addr:                   kafka.TCP("localhost:9092"),
+		Addr:                   kafka.TCP("127.0.0.1:9092"),
 		Topic:                  "jobs_raw",
 		Balancer:               &kafka.LeastBytes{},
 		AllowAutoTopicCreation: true,
@@ -34,7 +34,7 @@ func SendVacancy(v models.Vacancy) error {
 
 func GetReader() *kafka.Reader {
 	return kafka.NewReader(kafka.ReaderConfig{
-		Brokers:  []string{"localhost:9092"},
+		Brokers:  []string{"127.0.0.1:9092"},
 		Topic:    "jobs_raw",
 		GroupID:  "processor-group",
 		MinBytes: 10e3,
