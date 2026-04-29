@@ -3,6 +3,7 @@ package scraper
 import (
 	"fmt"
 	"job-aggregator/internal/models"
+	"strings"
 	"time"
 
 	"github.com/gocolly/colly/v2"
@@ -24,14 +25,20 @@ func (s *HabrScrapper) Parse(query string) ([]models.Vacancy, error) {
 	var vacancies []models.Vacancy
 
 	s.Collector.OnHTML(".vacancy-card", func(e *colly.HTMLElement) {
+		var skills []string
+		e.ForEach(".vacancy-card__skills-item", func(_ int, el *colly.HTMLElement) {
+			skills = append(skills, el.Text)
+		})
+		fullDesc := strings.Join(skills, " • ")
 		v := models.Vacancy{
-			ID:        e.Attr("id"),
-			Title:     e.ChildText(".vacancy-card__title"),
-			Company:   e.ChildText(".vacancy-card__company-title"),
-			Location:  e.ChildText(".vacancy-card__meta"),
-			URL:       "https://career.habr.com" + e.ChildAttr(".vacancy-card__title-link", "href"),
-			Source:    "Habr",
-			CreatedAt: time.Now(),
+			ID:          e.Attr("id"),
+			Title:       e.ChildText(".vacancy-card__title"),
+			Description: fullDesc,
+			Company:     e.ChildText(".vacancy-card__company-title a"),
+			Location:    e.ChildText(".vacancy-card__meta"),
+			URL:         "https://career.habr.com" + e.ChildAttr(".vacancy-card__title-link", "href"),
+			Source:      "Habr",
+			CreatedAt:   time.Now(),
 		}
 		vacancies = append(vacancies, v)
 

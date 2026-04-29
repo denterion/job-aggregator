@@ -22,11 +22,11 @@ func NewPostgresStorage(connStr string) (*PostgresStorage, error) {
 func (s *PostgresStorage) SaveVacancy(v models.Vacancy) error {
 
 	query := `
-		INSERT INTO vacancies (external_id, title, company, location, salary, url, source)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO vacancies (external_id, title, description, company, location, salary, url, source)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		ON CONFLICT (url) DO NOTHING
 	`
 
-	_, err := s.Conn.Exec(context.Background(), query, v.ID, v.Title, v.Company, v.Location, v.Salary, v.URL, v.Source)
+	_, err := s.Conn.Exec(context.Background(), query, v.ID, v.Title, v.Description, v.Company, v.Location, v.Salary, v.URL, v.Source)
 	return err
 }

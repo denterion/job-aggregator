@@ -10,13 +10,12 @@ func TestShouldProcess(t *testing.T) {
 	tests := []struct {
 		name     string
 		title    string
+		desc     string
 		expected bool
 	}{
-		{"Valid Go", "Middle Golang Developer", true},
-		{"Valid lowercase", "junior go dev", true},
-		{"Invalid Python", "Python Senior Architect", false},
-		{"Invalid PHP", "Laravel backend", false},
-		{"Valid with noise", "Fullstack {Go/React}", true},
+		{"Junior Go", "Junior Developer", "We use Golang for our mircoservices", true},
+		{"Intern Russian", "Стажер-разработчик", "Будем писать на языке Go", true},
+		{"Not Go", "Junior Java Developer", "Spring boot is cool", false},
 	}
 
 	for _, tt := range tests {
