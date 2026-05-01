@@ -3,7 +3,6 @@ package scraper
 import (
 	"fmt"
 	"job-aggregator/internal/models"
-	"strings"
 	"time"
 
 	"github.com/gocolly/colly/v2"
@@ -24,32 +23,33 @@ func NewHabrScraper() *HabrScrapper {
 func (s *HabrScrapper) Parse(query string) ([]models.Vacancy, error) {
 	var vacancies []models.Vacancy
 
-	s.Collector.OnHTML(".vacancy-card", func(e *colly.HTMLElement) {
-		var skills []string
-		e.ForEach(".vacancy-card__skills-item", func(_ int, el *colly.HTMLElement) {
-			skills = append(skills, el.Text)
-		})
-		fullDesc := strings.Join(skills, " • ")
+	// 1. На странице списка находим все ссылки на вакансии и заходим в них
+	s.Collector.OnHTML(".vacancy-card__title-link", func(e *colly.HTMLElement) {
+		vacancyURL := e.Request.AbsoluteURL(e.Attr("href"))
+		// Заставляем коллектор зайти внутрь каждой найденной вакансии
+		e.Request.Visit(vacancyURL)
+	})
+
+	// 2. А здесь описываем, ЧТО собирать ВНУТРИ страницы вакансии
+	s.Collector.OnHTML(".page-container", func(e *colly.HTMLElement) {
+		// Проверяем, что мы действительно на странице вакансии (есть заголовок)
+		title := e.ChildText(".vacancy-header__title")
+		if title == "" {
+			return // Это не страница вакансии, пропускаем
+		}
+
 		v := models.Vacancy{
-			ID:          e.Attr("id"),
-			Title:       e.ChildText(".vacancy-card__title"),
-			Description: fullDesc,
-			Company:     e.ChildText(".vacancy-card__company-title a"),
-			Location:    e.ChildText(".vacancy-card__meta"),
-			URL:         "https://career.habr.com" + e.ChildAttr(".vacancy-card__title-link", "href"),
+			Title:       title,
+			Company:     e.ChildText(".company_name"),
+			Salary:      e.ChildText(".vacancy-header__salary"),
+			Description: e.ChildText(".vacancy-description__text"), // Текст описания
+			URL:         e.Request.URL.String(),
 			Source:      "Habr",
 			CreatedAt:   time.Now(),
 		}
+
+		fmt.Printf("✅ Нашел вакансию: %s\n", v.Title)
 		vacancies = append(vacancies, v)
-
-		if v.Title == "" || v.URL == "https://career.habr.com" {
-			fmt.Println("Скрапер нашел пустую карточку, проверь селекторы!")
-			return
-		}
-
-		fmt.Printf("Нашел: %s [%s]\n", v.Title, v.Company) // Увидишь это в консоли скрапера
-		vacancies = append(vacancies, v)
-
 	})
 
 	searchURL := fmt.Sprintf("https://career.habr.com/vacancies?q=%s&type=all", query)
