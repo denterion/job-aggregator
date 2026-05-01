@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS vacancies(
     id SERIAL PRIMARY KEY,
     external_id TEXT UNIQUE,
     title TEXT NOT NULL,
+    description TEXT,
     company TEXT,
     location TEXT,
     salary TEXT,
