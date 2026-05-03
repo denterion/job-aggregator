@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	botInt "job-aggregator/internal/bot"
 	"job-aggregator/internal/storage"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -91,13 +92,11 @@ func handleCommand(bot *tgbotapi.BotAPI, msg *tgbotapi.Message, db *storage.Post
 		}
 
 		for _, v := range vacs {
-			text := fmt.Sprintf(
-				"<b>%s</b>\n Компания: %s\n Зарплата: %s\n Стек: <i>%s</i>\n\n <a href=\"%s\">Открыть вакансию</a>",
-				v.Title, v.Company, v.Salary, v.Description, v.URL,
-			)
+			formattedText := botInt.FormatVacancy(v)
 
-			newMsg := tgbotapi.NewMessage(msg.Chat.ID, text)
+			newMsg := tgbotapi.NewMessage(msg.Chat.ID, formattedText)
 			newMsg.ParseMode = "HTML"
+			newMsg.DisableWebPagePreview = false
 			bot.Send(newMsg)
 		}
 
