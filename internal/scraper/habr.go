@@ -3,6 +3,7 @@ package scraper
 import (
 	"fmt"
 	"job-aggregator/internal/models"
+	"strings"
 	"time"
 
 	"github.com/gocolly/colly/v2"
@@ -16,28 +17,23 @@ func NewHabrScraper() *HabrScrapper {
 	return &HabrScrapper{
 		Collector: colly.NewCollector(
 			colly.AllowedDomains("career.habr.com"),
+			colly.UserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"),
 		),
 	}
 }
 
 func (s *HabrScrapper) Parse(query string) ([]models.Vacancy, error) {
 	var vacancies []models.Vacancy
-
-	// 1. На странице списка находим все ссылки на вакансии и заходим в них
 	s.Collector.OnHTML(".vacancy-card__title-link", func(e *colly.HTMLElement) {
 		vacancyURL := e.Request.AbsoluteURL(e.Attr("href"))
-		// Заставляем коллектор зайти внутрь каждой найденной вакансии
 		e.Request.Visit(vacancyURL)
 	})
 
-	// 2. А здесь описываем, ЧТО собирать ВНУТРИ страницы вакансии
 	s.Collector.OnHTML(".page-container", func(e *colly.HTMLElement) {
-		// Проверяем, что мы действительно на странице вакансии (есть заголовок)
-		title := e.ChildText(".vacancy-header__title")
+		title := strings.TrimSpace(e.ChildText(".page-title__title"))
 		if title == "" {
-			return // Это не страница вакансии, пропускаем
+			return
 		}
-
 		v := models.Vacancy{
 			Title:       title,
 			Company:     e.ChildText(".company_name"),
@@ -48,7 +44,7 @@ func (s *HabrScrapper) Parse(query string) ([]models.Vacancy, error) {
 			CreatedAt:   time.Now(),
 		}
 
-		fmt.Printf("✅ Нашел вакансию: %s\n", v.Title)
+		fmt.Printf("Нашел вакансию: %s\n", v.Title)
 		vacancies = append(vacancies, v)
 	})
 
